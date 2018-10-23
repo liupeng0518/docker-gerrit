@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: gerrit
+spec:
+  serviceName: gerrit-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gerrit
+  template:
+    metadata:
+      labels:
+        app: gerrit
+    spec:
+      securityContext:
+#        runAsUser: 1000
+#        fsGroup: 1000
+      containers:
+      - name: gerrit
+        image: docker-registry.default.svc:5000/openshift/gerrit
+        env:
+        - name: DATABASE_TYPE
+          value: postgresql
+        - name: DATABASE_HOSTNAME
+          value: gerrit-postgres
+        - name: DATABASE_DATABASE
+          value: reviewdb
+        - name: DATABASE_USERNAME
+          value: gerrit2
+        - name: DATABASE_PASSWORD
+          value: gerrit
+        - name: USER_NAME
+          value: gerrit
+        - name: USER_EMAIL
+          value: gerrit@inspur.com
+        # - name: AUTH_TYPE
+        #   value: LDAP
+        # - name: LDAP_SERVER
+        #   value: ldap://ldap.server.address
+        # - name: <ldap-basedn>
+        #如果使用ladp请注释AUTH_TYPE
+        - name: AUTH_TYPE
+          value: DEVELOPMENT_BECOME_ANY_ACCOUNT
+          
+        ports:
+        - containerPort: 8080
+          name: web
+        - containerPort: 29418
+          name: ssh
+        volumeMounts:
+        - name: review-site
+          mountPath: /var/gerrit/review_site
+
+      volumes:
+      - name: review-site
+        persistentVolumeClaim:
+          claimName: review-site

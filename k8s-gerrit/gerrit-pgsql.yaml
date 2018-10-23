@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: gerrit-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: docker-registry.default.svc:5000/openshift/postgres:10-alpine
+        ports:
+        - containerPort: 5432
+          name: db
+        env:
+          - name: POSTGRES_DB
+            value: "reviewdb"
+          - name: POSTGRES_USER
+            value: "gerrit2"
+          - name: POSTGRES_PASSWORD
+            value: "gerrit"
+        volumeMounts:
+         - name: data
+           mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: postgres-data-claim
